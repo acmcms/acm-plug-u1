@@ -1,0 +1,2 @@
+var prototype = exports.prototype = {};
+

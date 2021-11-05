@@ -145,7 +145,7 @@ public final class FormGroupProperties extends AbstractForm<FormGroupProperties>
 				.addField(
 						Control.createFieldList("address", MultivariantString.getString("Addresses", Collections.singletonMap("ru", "Aдреса")), this.excludeAddressesList)
 								.setAttribute("lookup", FormGroupProperties.LOOKUP_ADDRESS_FORMATTER)
-								.setAttribute("content_handler", new BaseFunctionActAbstract<Void, ContainerAddressesList>(Void.class, ContainerAddressesList.class) {
+								.setAttribute("content_handler", new BaseFunctionActAbstract<>(Void.class, ContainerAddressesList.class) {
 									
 									@Override
 									public ContainerAddressesList apply(final Void arg) {
@@ -162,7 +162,7 @@ public final class FormGroupProperties extends AbstractForm<FormGroupProperties>
 														"ru",
 														"ВНИМАНИЕ: Действует только если у данной группы выбран уровень авторизации 'автоматический' или выше!")))
 								.setAttribute("lookup", FormGroupProperties.LOOKUP_USER_FORMATTER)
-								.setAttribute("content_handler", new BaseFunctionActAbstract<Void, ContainerUserList>(Void.class, ContainerUserList.class) {
+								.setAttribute("content_handler", new BaseFunctionActAbstract<>(Void.class, ContainerUserList.class) {
 									
 									@Override
 									public ContainerUserList apply(final Void arg) {

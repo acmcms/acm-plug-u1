@@ -270,7 +270,7 @@ public class FormSearchSelectUsers extends AbstractForm<FormSearchSelectUsers> {
 						.addField(
 								Control.createFieldList("result", FormSearchSelectUsers.STR_RESULTS, null)
 										.setAttribute("content_fieldset", FormSearchSelectUsers.FIELDSET_USER_LISTING)
-										.setAttribute("content_handler", new BaseFunctionActAbstract<Void, ResultContainer>(Void.class, ResultContainer.class) {
+										.setAttribute("content_handler", new BaseFunctionActAbstract<>(Void.class, ResultContainer.class) {
 											
 											@Override
 											public ResultContainer apply(final Void arg) {
@@ -281,7 +281,7 @@ public class FormSearchSelectUsers extends AbstractForm<FormSearchSelectUsers> {
 						.addField(
 								Control.createFieldList("selection", FormSearchSelectUsers.STR_SELECTION, null)
 										.setAttribute("content_fieldset", FormSearchSelectUsers.FIELDSET_USER_LISTING)
-										.setAttribute("content_handler", new BaseFunctionActAbstract<Void, SelectionContainer>(Void.class, SelectionContainer.class) {
+										.setAttribute("content_handler", new BaseFunctionActAbstract<>(Void.class, SelectionContainer.class) {
 											
 											@Override
 											public SelectionContainer apply(final Void arg) {
@@ -301,7 +301,7 @@ public class FormSearchSelectUsers extends AbstractForm<FormSearchSelectUsers> {
 						.addField(
 								Control.createFieldList("selection", FormSearchSelectUsers.STR_SELECTION, null)
 										.setAttribute("content_fieldset", FormSearchSelectUsers.FIELDSET_USER_LISTING)
-										.setAttribute("content_handler", new BaseFunctionActAbstract<Void, SelectionContainer>(Void.class, SelectionContainer.class) {
+										.setAttribute("content_handler", new BaseFunctionActAbstract<>(Void.class, SelectionContainer.class) {
 											
 											@Override
 											public SelectionContainer apply(final Void arg) {
@@ -326,7 +326,7 @@ public class FormSearchSelectUsers extends AbstractForm<FormSearchSelectUsers> {
 													",")))
 					.addField(
 							Control.createFieldList("result", FormSearchSelectUsers.STR_RESULTS, null).setAttribute("content_fieldset", FormSearchSelectUsers.FIELDSET_USER_LISTING)
-									.setAttribute("content_handler", new BaseFunctionActAbstract<Void, ResultContainer>(Void.class, ResultContainer.class) {
+									.setAttribute("content_handler", new BaseFunctionActAbstract<>(Void.class, ResultContainer.class) {
 										
 										@Override
 										public ResultContainer apply(final Void arg) {
@@ -337,7 +337,7 @@ public class FormSearchSelectUsers extends AbstractForm<FormSearchSelectUsers> {
 					.addField(
 							Control.createFieldList("selection", FormSearchSelectUsers.STR_SELECTION, null)
 									.setAttribute("content_fieldset", FormSearchSelectUsers.FIELDSET_USER_LISTING)
-									.setAttribute("content_handler", new BaseFunctionActAbstract<Void, SelectionContainer>(Void.class, SelectionContainer.class) {
+									.setAttribute("content_handler", new BaseFunctionActAbstract<>(Void.class, SelectionContainer.class) {
 										
 										@Override
 										public SelectionContainer apply(final Void arg) {
@@ -360,7 +360,7 @@ public class FormSearchSelectUsers extends AbstractForm<FormSearchSelectUsers> {
 					.addField(
 							Control.createFieldList("selection", FormSearchSelectUsers.STR_SELECTION, null)
 									.setAttribute("content_fieldset", FormSearchSelectUsers.FIELDSET_USER_LISTING)
-									.setAttribute("content_handler", new BaseFunctionActAbstract<Void, SelectionContainer>(Void.class, SelectionContainer.class) {
+									.setAttribute("content_handler", new BaseFunctionActAbstract<>(Void.class, SelectionContainer.class) {
 										
 										@Override
 										public SelectionContainer apply(final Void arg) {

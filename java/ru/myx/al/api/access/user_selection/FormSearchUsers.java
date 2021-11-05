@@ -166,7 +166,7 @@ public class FormSearchUsers extends AbstractForm<FormSearchUsers> {
 														",")))
 						.addField(
 								Control.createFieldList("result", FormSearchUsers.STR_RESULTS, null).setAttribute("content_fieldset", FormSearchUsers.FIELDSET_USER_LISTING)
-										.setAttribute("content_handler", new BaseFunctionActAbstract<Object, FilterUsersContainer>(Object.class, FilterUsersContainer.class) {
+										.setAttribute("content_handler", new BaseFunctionActAbstract<>(Object.class, FilterUsersContainer.class) {
 											
 											@Override
 											public FilterUsersContainer apply(final Object arg) {
@@ -199,7 +199,7 @@ public class FormSearchUsers extends AbstractForm<FormSearchUsers> {
 													",")))
 					.addField(
 							Control.createFieldList("result", FormSearchUsers.STR_RESULTS, null).setAttribute("content_fieldset", FormSearchUsers.FIELDSET_USER_LISTING)
-									.setAttribute("content_handler", new BaseFunctionActAbstract<Object, FilterUsersContainer>(Object.class, FilterUsersContainer.class) {
+									.setAttribute("content_handler", new BaseFunctionActAbstract<>(Object.class, FilterUsersContainer.class) {
 										
 										@Override
 										public FilterUsersContainer apply(final Object arg) {

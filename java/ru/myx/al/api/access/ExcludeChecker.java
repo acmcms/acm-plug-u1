@@ -25,7 +25,7 @@ import ru.myx.ae3.serve.ServeRequest;
  */
 class ExcludeChecker {
 	
-	private static final Comparator<String> COMPARATOR_PREFFIX_SORT = new Comparator<String>() {
+	private static final Comparator<String> COMPARATOR_PREFFIX_SORT = new Comparator<>() {
 		
 		@Override
 		public int compare(final String o1, final String o2) {

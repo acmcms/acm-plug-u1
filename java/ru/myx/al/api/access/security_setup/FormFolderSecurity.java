@@ -143,7 +143,7 @@ public class FormFolderSecurity extends AbstractForm<FormFolderSecurity> {
 						groupList )
 				.setAttribute( "content_fieldset", FormFolderSecurity.FIELDSET_GROUP_LIST )
 				.setAttribute( "content_handler",
-						new BaseFunctionActAbstract<Void, ContainerGroupList>( Void.class, ContainerGroupList.class ) {
+						new BaseFunctionActAbstract<>( Void.class, ContainerGroupList.class ) {
 							@Override
 							public ContainerGroupList apply(final Void listing) {
 								return new ContainerGroupList( available, path, groupList );

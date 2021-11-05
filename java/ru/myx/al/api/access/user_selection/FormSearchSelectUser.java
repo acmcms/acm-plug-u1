@@ -172,7 +172,7 @@ public class FormSearchSelectUser extends AbstractForm<FormSearchSelectUser> {
 						.addField(
 								Control.createFieldList("result", FormSearchSelectUser.STR_RESULTS, null)
 										.setAttribute("content_fieldset", FormSearchSelectUser.FIELDSET_USER_LISTING)
-										.setAttribute("content_handler", new BaseFunctionActAbstract<Object, Object>(Object.class, Object.class) {
+										.setAttribute("content_handler", new BaseFunctionActAbstract<>(Object.class, Object.class) {
 											
 											@Override
 											public Object apply(final Object arg) {
@@ -208,7 +208,7 @@ public class FormSearchSelectUser extends AbstractForm<FormSearchSelectUser> {
 													",")))
 					.addField(
 							Control.createFieldList("result", FormSearchSelectUser.STR_RESULTS, null).setAttribute("content_fieldset", FormSearchSelectUser.FIELDSET_USER_LISTING)
-									.setAttribute("content_handler", new BaseFunctionActAbstract<Object, Object>(Object.class, Object.class) {
+									.setAttribute("content_handler", new BaseFunctionActAbstract<>(Object.class, Object.class) {
 										
 										@Override
 										public Object apply(final Object arg) {

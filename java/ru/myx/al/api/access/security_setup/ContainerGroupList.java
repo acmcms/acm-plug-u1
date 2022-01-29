@@ -4,6 +4,7 @@
 package ru.myx.al.api.access.security_setup;
 
 import java.util.Collections;
+import java.util.function.Function;
 
 import ru.myx.ae1.access.AccessManager;
 import ru.myx.ae1.access.AccessUser;
@@ -13,7 +14,6 @@ import ru.myx.ae3.access.AccessPermission;
 import ru.myx.ae3.access.AccessPermissions;
 import ru.myx.ae3.access.AccessPreset;
 import ru.myx.ae3.access.AccessPrincipal;
-import java.util.function.Function;
 import ru.myx.ae3.act.Context;
 import ru.myx.ae3.base.Base;
 import ru.myx.ae3.base.BaseArrayDynamic;
@@ -27,25 +27,26 @@ import ru.myx.ae3.help.Convert;
 import ru.myx.al.api.access.AclObject;
 
 class ContainerGroupList extends AbstractContainer<ContainerGroupList> {
-
+	
 	private static final ControlCommand<?> CMD_ADD_GROUP = Control
 			.createCommand("addgrp", MultivariantString.getString("Add group(s)", Collections.singletonMap("ru", "Добавление групп(ы)"))).setCommandPermission("$modify_security")
 			.setCommandIcon("command-add-group");
-
+	
 	private static final ControlCommand<?> CMD_ADD_USER = Control
 			.createCommand("addusr", MultivariantString.getString("Add users(s)", Collections.singletonMap("ru", "Добавление пользовател(я/ей)")))
 			.setCommandPermission("$modify_security").setCommandIcon("command-add-user");
-
+	
 	private static final ControlCommand<?> CMD_CLEAR_ALL = Control.createCommand("clearall", MultivariantString.getString("Clear", Collections.singletonMap("ru", "Очистить")))
 			.setCommandPermission("$modify_security").setCommandIcon("command-dispose");
-
+	
 	private final AccessPermissions available;
-
+	
 	private final String path;
-
+	
 	private final BaseArrayDynamic<ControlBasic<?>> groupList;
-
+	
 	ContainerGroupList(final AccessPermissions available, final String path, final BaseArrayDynamic<ControlBasic<?>> groupList) {
+		
 		this.available = available;
 		this.path = path;
 		this.groupList = groupList;
@@ -60,10 +61,10 @@ class ContainerGroupList extends AbstractContainer<ContainerGroupList> {
 			}
 		}
 	}
-
+	
 	@Override
 	public Object getCommandResult(final ControlCommand<?> command, final BaseObject arguments) throws Exception {
-
+		
 		if (command == ContainerGroupList.CMD_ADD_GROUP) {
 			return new FormAddGroup(this.path, this.groupList, this.available);
 		}
@@ -73,10 +74,10 @@ class ContainerGroupList extends AbstractContainer<ContainerGroupList> {
 			final String path = this.path;
 			final AccessPermissions available = this.available;
 			return manager.createFormUsersSelection(null, new AccessUser<?>[0], new Function<AccessUser<?>[], Object>() {
-
+				
 				@Override
-				public Object apply(AccessUser<?>[] selected) {
-					
+				public Object apply(final AccessUser<?>[] selected) {
+
 					if (selected != null && selected.length > 0) {
 						for (final AccessUser<?> element : selected) {
 							groupList.add(new AclObject.EntryDescriber(element.getKey(), manager.securityGetPermissionsEffective(element, path), available));
@@ -134,10 +135,10 @@ class ContainerGroupList extends AbstractContainer<ContainerGroupList> {
 		}
 		return super.getCommandResult(command, arguments);
 	}
-
+	
 	@Override
 	public ControlCommandset getCommands() {
-
+		
 		final ControlCommandset result = Control.createOptions();
 		// if(groupList.size() <
 		// Know.currentServer().getAccessManager().getAllGroups().length){
@@ -150,65 +151,70 @@ class ContainerGroupList extends AbstractContainer<ContainerGroupList> {
 		}
 		return result;
 	}
-
+	
 	@Override
 	public ControlCommandset getContentCommands(final String key) {
-
+		
 		final int index = this.getIndex(key);
 		final ControlCommandset result = Control.createOptions();
 		final AclObject.Entry record = (AclObject.Entry) this.groupList.baseGet(index, BaseObject.UNDEFINED);
 		if (record.getPermissions() != AccessPermissions.PERMISSIONS_ALL) {
-			result.add(Control.createCommand(
-					"tofa", //
-					MultivariantString.getString(
-							"Full Access", //
-							Collections.singletonMap("ru", "Полный")))//
-					.setCommandIcon("command-grant")//
-					.setAttribute("key", key));
+			result.add(
+					Control.createCommand(
+							"tofa", //
+							MultivariantString.getString(
+									"Full Access", //
+									Collections.singletonMap("ru", "Полный")))//
+							.setCommandIcon("command-grant")//
+							.setAttribute("key", key));
 		}
 		if (record.getPermissions() != AccessPermissions.PERMISSIONS_NONE) {
-			result.add(Control.createCommand(
-					"tona", //
-					MultivariantString.getString(
-							"No Access", //
-							Collections.singletonMap("ru", "Нет доступа")))//
-					.setCommandIcon("command-deny")//
-					.setAttribute("key", key));
+			result.add(
+					Control.createCommand(
+							"tona", //
+							MultivariantString.getString(
+									"No Access", //
+									Collections.singletonMap("ru", "Нет доступа")))//
+							.setCommandIcon("command-deny")//
+							.setAttribute("key", key));
 		}
 		if (this.available != null) {
 			final AccessPreset[] presets = this.available.getPresets();
 			if (presets != null && presets.length > 0) {
-				result.add(Control.createCommand(
-						"tops", //
-						MultivariantString.getString(
-								"Preset...", //
-								Collections.singletonMap("ru", "Профиль...")))//
-						.setCommandIcon("command-setup-preset")//
-						.setAttribute("key", key));
+				result.add(
+						Control.createCommand(
+								"tops", //
+								MultivariantString.getString(
+										"Preset...", //
+										Collections.singletonMap("ru", "Профиль...")))//
+								.setCommandIcon("command-setup-preset")//
+								.setAttribute("key", key));
 			}
 			final AccessPermission[] permissions = this.available.getAllPermissions();
 			if (permissions != null && permissions.length > 0) {
-				result.add(Control.createCommand(
-						"tocs", //
-						MultivariantString.getString(
-								"Custom...", //
-								Collections.singletonMap("ru", "Настройка...")))//
-						.setCommandIcon("command-setup-custom")//
-						.setAttribute("key", key));
+				result.add(
+						Control.createCommand(
+								"tocs", //
+								MultivariantString.getString(
+										"Custom...", //
+										Collections.singletonMap("ru", "Настройка...")))//
+								.setCommandIcon("command-setup-custom")//
+								.setAttribute("key", key));
 			}
 		}
-		result.add(Control.createCommand(
-				"dele", //
-				MultivariantString.getString(
-						"Delete", //
-						Collections.singletonMap("ru", "Удалить")))//
-				.setCommandIcon("command-delete")//
-				.setAttribute("key", key));
+		result.add(
+				Control.createCommand(
+						"dele", //
+						MultivariantString.getString(
+								"Delete", //
+								Collections.singletonMap("ru", "Удалить")))//
+						.setCommandIcon("command-delete")//
+						.setAttribute("key", key));
 		return result;
 	}
-
+	
 	private int getIndex(final String key) {
-
+		
 		final int intIndex = Convert.Any.toInt(key, -1);
 		if (intIndex == -1) {
 			final int length = this.groupList.length();
@@ -224,7 +230,7 @@ class ContainerGroupList extends AbstractContainer<ContainerGroupList> {
 						return i;
 					}
 				} else {
-					if (key.equals(groupObject)) {
+					if (key.equals(groupObject.baseToJavaString())) {
 						return i;
 					}
 				}

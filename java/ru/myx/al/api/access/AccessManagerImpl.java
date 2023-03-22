@@ -349,7 +349,7 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		userObject.fresh = false;
 		{
 			final String login = userData.getLogin();
-			if (login == null || login.trim().length() == 0) {
+			if (login == null || login.isBlank()) {
 				userData.setLogin(Engine.createGuid());
 			}
 		}
@@ -1110,7 +1110,7 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 								final Set<String> permissions;
 								final AccessPermissions nodePermissions;
 								boolean control;
-								if (value == null || value.trim().length() == 0) {
+								if (value == null || value.isBlank()) {
 									permissions = AccessPermissions.PERMISSIONS_NONE;
 									control = false;
 									nodePermissions = null;
@@ -1396,13 +1396,13 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 	public final AccessUser<?>[] search(final String login, final String email, final long logonStart, final long logonEnd, final SortMode sortMode) {
 
 		final StringBuilder wherePart = new StringBuilder();
-		if (login != null && login.trim().length() > 0) {
+		if (login != null && !login.isBlank()) {
 			if (wherePart.length() > 0) {
 				wherePart.append(" AND ");
 			}
 			wherePart.append("login like ?");
 		}
-		if (email != null && email.trim().length() > 0) {
+		if (email != null && !email.isBlank()) {
 			if (wherePart.length() > 0) {
 				wherePart.append(" AND ");
 			}
@@ -1425,10 +1425,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		try (final Connection conn = this.getConnection()) {
 			try (final PreparedStatement ps = conn.prepareStatement(query.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
 				int index = 1;
-				if (login != null && login.trim().length() > 0) {
+				if (login != null && !login.isBlank()) {
 					ps.setString(index++, login.toLowerCase().replace('*', '%'));
 				}
-				if (email != null && email.trim().length() > 0) {
+				if (email != null && !email.isBlank()) {
 					ps.setString(index++, email.toLowerCase().replace('*', '%'));
 				}
 				if (logonStart >= 0) {

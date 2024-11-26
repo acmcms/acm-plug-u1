@@ -8,24 +8,28 @@ import ru.myx.ae3.cache.CreationHandlerObject;
 import ru.myx.ae3.report.Report;
 
 final class CreatorUserGroups implements CreationHandlerObject<Void, AccessGroup<?>[]> {
-	private final AccessManagerImpl	manager;
 	
+	private final AccessManagerImpl manager;
+
 	CreatorUserGroups(final AccessManagerImpl manager) {
+		
 		this.manager = manager;
 	}
-	
+
 	@Override
 	public AccessGroup<?>[] create(final Void attachment, final String key) {
+		
 		if (Report.MODE_DEBUG) {
-			Report.devel( "UMAN", "USR_USER_GROUPS_CREATE, userId=" + key );
+			Report.devel("UMAN", "USR_USER_GROUPS_CREATE, userId=" + key);
 		}
-		final RequestUserGroups request = new RequestUserGroups( this.manager, key );
-		this.manager.enqueueTask( request );
+		final RequestUserGroups request = new RequestUserGroups(this.manager, key);
+		this.manager.enqueueTask(request);
 		return request.baseValue();
 	}
-	
+
 	@Override
 	public long getTTL() {
-		return 10L * 60000L;
+		
+		return 10L * 60_000L;
 	}
 }

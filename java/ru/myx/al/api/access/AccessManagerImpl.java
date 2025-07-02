@@ -48,7 +48,6 @@ import ru.myx.ae3.exec.Exec;
 import ru.myx.ae3.exec.ExecProcess;
 import ru.myx.ae3.help.Create;
 import ru.myx.ae3.help.Format;
-import ru.myx.ae3.help.Text;
 import ru.myx.ae3.report.Report;
 import ru.myx.ae3.report.ReportReceiver;
 import ru.myx.ae3.status.StatusInfo;
@@ -64,21 +63,21 @@ import ru.myx.jdbc.queueing.RunnerDatabaseRequestor;
 
 /** @author myx */
 public final class AccessManagerImpl extends AbstractAccessManager implements TemporaryStorage {
-	
+
 	private static final AccessGroup<?>[] EMPTY_GROUP_ARRAY = new AccessGroup<?>[0];
-	
+
 	private static final Comparator<AclObject> ACL_ASC_COMPARATOR = new ComparatorAclAscending();
-	
+
 	private static final Comparator<AccessGroup<?>> GROUP_DESC_COMPARATOR = new ComparatorGroupDescending();
-	
+
 	private static final String NULL_USER_ID = new String("NUD");
-	
+
 	private static final UserProfileData NULL_USER_PROFILE = new UserProfileData();
-	
+
 	private static final String OWNER = "ACCESS-MANAGER";
-	
+
 	private final static String fixPath(final String path) {
-		
+
 		if (path == null) {
 			return "/";
 		}
@@ -91,9 +90,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		return path;
 	}
-	
+
 	private static final String getSortMode(final SortMode sortMode) {
-		
+
 		switch (sortMode) {
 			case SM_ACCESSED_DESC :
 			case SM_CHANGE_DESC :
@@ -116,9 +115,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 				return " ORDER BY login ASC";
 		}
 	}
-	
+
 	private static final String getSortModeGroupByAppend(final SortMode sortMode) {
-		
+
 		if (sortMode == null) {
 			return ", login ORDER BY login ASC";
 		}
@@ -144,132 +143,132 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 				return ", login ORDER BY login ASC";
 		}
 	}
-	
+
 	private static final long getTime(final Timestamp ts) {
-		
+
 		return ts == null
 			? 0L
 			: ts.getTime();
 	}
-	
+
 	private long stsProfilesAccessMultiUpdates = 0;
-	
+
 	private long stsProfilesAccessUpdated = 0;
-	
+
 	private long stsUserAccessMultiUpdates = 0;
-	
+
 	private long stsUserLoginsResolved = 0;
-	
+
 	private long stsUserAccessUpdated = 0;
-	
+
 	private long stsGroupListLoaded = 0;
-	
+
 	private long stsProfilesLoaded = 0;
-	
+
 	private long stsUserGroupsLoaded = 0;
-	
+
 	private long stsUsersDeleted = 0;
-	
+
 	private long stsGroupsDeleted = 0;
-	
+
 	private long stsGroupUsersLoaded = 0;
-	
+
 	private long stsAclListLoaded = 0;
-	
+
 	private long stsSecurityChecks = 0;
-	
+
 	private long stsSecurityGranted = 0;
-	
+
 	private long stsSecurityDenied = 0;
-	
+
 	private long stsProfilesCommited = 0;
-	
+
 	private long stsProfilesUpdated = 0;
-	
+
 	private long stsProfilesInserted = 0;
-	
+
 	private long stsUsersUpdated = 0;
-	
+
 	private long stsUsersInserted = 0;
-	
+
 	private long stsGroupsUpdated = 0;
-	
+
 	private long stsGroupsInserted = 0;
-	
+
 	private long stsUsersCommited = 0;
-	
+
 	private long stsUsersCreated = 0;
-	
+
 	private long stsUsersLoaded = 0;
-	
+
 	private final Map<String, AclObject> aclCache = new HashMap<>(256, 0.5f);
-	
+
 	private final Object aclLock = new Object();
-	
+
 	private final Map<String, AclObject> aclMap = new HashMap<>(256, 0.5f);
-	
+
 	private boolean aclsLoaded = false;
-	
+
 	private final Map<String, Set<String>> aclViewTreeCache = new HashMap<>(256, 0.75f);
-	
+
 	private final CreatorUserObject creatorUserObject;
-	
+
 	private final CreatorLoginToGuid creatorUserLogin;
-	
+
 	private final CreatorAuthType creatorAuthType;
-	
+
 	private final CreatorUserProfileTryLoad creatorUserProfileTryLoad;
-	
+
 	private final CreatorUserProfileTryCreate creatorUserProfileTryCreate;
-	
+
 	private final CreatorUserProfileEmpty creatorUserProfileFreshCreate;
-	
+
 	private final CreatorUserGroups creatorUserGroups;
-	
+
 	private List<AccessGroup<?>> groupList = null;
-	
+
 	private final Object groupLock = new Object();
-	
+
 	private Map<String, GroupObject> groupMap = null;
-	
+
 	private final String pool;
-	
+
 	private final CacheL2<UserProfileData> cacheUserProfile = Cache.createL2("User profiles", CacheType.NORMAL_JAVA_SOFT);
-	
+
 	private final ScheduledJobs scheduledJobs = new ScheduledJobs(this);
-	
+
 	private RunnerDatabaseRequestor searchLoader;
-	
+
 	private final Server server;
-	
+
 	private boolean stopped = true;
-	
+
 	private final String tablePrefix;
-	
+
 	final Set<UserProfileData> toCommitProfiles = new HashSet<>();
-	
+
 	final Set<UserData> toCommitUsers = new HashSet<>();
-	
+
 	final Set<String> toUpdateUsers = new HashSet<>();
-	
+
 	final Set<UserProfileData> toUpdateProfiles = new HashSet<>();
-	
+
 	private final CacheL1<UserObject> cacheUser = Cache.createL1("users", CacheType.FAST_JAVA_SOFT);
-	
+
 	private final CacheL1<String> cacheUserLogin = Cache.createL1("user_logins", CacheType.NORMAL_JAVA_SOFT);
-	
+
 	private final CacheL1<AuthTypeImpl> cacheAuthType = Cache.createL1("auth_types", CacheType.NORMAL_JAVA_SOFT);
-	
+
 	private final String userByUserId;
-	
+
 	private final CacheL1<AccessGroup<?>[]> cacheUserGroups = Cache.createL1("user_groups", CacheType.NORMAL_JAVA_SOFT);
-	
+
 	private final String userInsertion;
-	
+
 	private final String userUpdate;
-	
+
 	AccessManagerImpl(final Server server, final String pool, final String tablePrefix, final RunnerDatabaseRequestor searchLoader) {
-		
+
 		this.server = server;
 		this.pool = pool;
 		this.searchLoader = searchLoader;
@@ -285,9 +284,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		this.userInsertion = "INSERT INTO " + tablePrefix + "UserAccounts(UserID,login,email,language,type,added,passhash,passhighhash) VALUES (?,?,?,?,?,?,?,?)";
 		this.userUpdate = "UPDATE " + tablePrefix + "UserAccounts SET login=?, email=?, language=?, type=?, passhash=?, passhighhash=? WHERE UserID=?";
 	}
-	
+
 	private AclObject aclByPath(final String path) {
-		
+
 		{
 			final AclObject aclValue = this.aclCache.get(path);
 			if (aclValue != null) {
@@ -310,9 +309,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			return upperValue;
 		}
 	}
-	
+
 	private final void commit(final UserProfileData data) {
-		
+
 		if (data.getCreated() == -1L) {
 			this.cacheUserProfile.put(data.getUserID(), data.getName(), data, 60_000L);
 		}
@@ -320,9 +319,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			this.toCommitProfiles.add(data);
 		}
 	}
-	
+
 	private final void cpdINSERT(final Connection conn, final Timestamp time, final List<UserProfileData> data) throws SQLException {
-		
+
 		if (data == null || data.isEmpty()) {
 			return;
 		}
@@ -349,9 +348,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	private final void cpdUPDATE(final Connection conn, final Timestamp time, final List<UserProfileData> profiles) throws SQLException {
-		
+
 		if (profiles == null || profiles.isEmpty()) {
 			return;
 		}
@@ -375,16 +374,16 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	private final void cudINSERT(final Connection conn, final Timestamp time, final long timestampMillis, final List<UserData> data) throws SQLException {
-		
+
 		if (data == null || data.isEmpty()) {
 			return;
 		}
 		try (final PreparedStatement ps = conn.prepareStatement(this.userInsertion)) {
 			for (int i = data.size() - 1; i >= 0; --i) {
 				final UserData current = data.get(i);
-				
+
 				ps.setString(1, current.getUserId());
 				ps.setString(2, current.getLogin());
 				if (current.getEmail() == null) {
@@ -402,10 +401,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 				ps.setInt(7, current.getPassHashLow());
 				ps.setInt(8, current.getPassHashHigh());
 				ps.execute();
-				
+
 				current.setCreated(timestampMillis);
 				current.setChanged(timestampMillis);
-				
+
 				this.stsUsersInserted++;
 				if (i > 0) {
 					ps.clearParameters();
@@ -413,9 +412,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	private final void cudUPDATE(final Connection conn, final Timestamp time, final long timestampMillis, final List<UserData> data) throws SQLException {
-		
+
 		if (data == null || data.isEmpty()) {
 			return;
 		}
@@ -447,9 +446,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	private final AccessGroup<?> executeGetGroup(final Connection conn, final String key, final boolean create) throws SQLException {
-		
+
 		if (key == null || key.length() == 0) {
 			if (create) {
 				final GroupObject result = new GroupObject(this, Engine.createGuid());
@@ -476,7 +475,7 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 				break;
 			}
 		}
-		
+
 		GroupObject result = groupMap.get(key);
 		if (result == null && create) {
 			result = new GroupObject(this, Engine.createGuid());
@@ -485,9 +484,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		return result;
 	}
-	
+
 	private final void loadAcls() {
-		
+
 		if (this.aclsLoaded) {
 			return;
 		}
@@ -603,9 +602,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	private final List<AccessGroup<?>> loadGroupsList() {
-		
+
 		{
 			final List<AccessGroup<?>> groupList = this.groupList;
 			if (groupList != null) {
@@ -623,9 +622,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			return this.groupList;
 		}
 	}
-	
+
 	private final AccessUser<?>[] loadUsersForGroup(final String groupID) {
-		
+
 		try (final Connection conn = this.getConnection()) {
 			try (final PreparedStatement ps = conn.prepareStatement(
 					"SELECT u.UserID FROM " + this.tablePrefix + "UserGroups g, " + this.tablePrefix + "UserAccounts u WHERE g.groupid=? AND u.UserID=g.userid GROUP BY u.UserID",
@@ -645,10 +644,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			throw new RuntimeException("AccessManager", e);
 		}
 	}
-	
+
 	@Override
 	public final void commitGroup(final AccessGroup<?> group) {
-		
+
 		if (group == null) {
 			throw new NullPointerException("group can't be null!");
 		}
@@ -662,10 +661,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		Report.event("UMAN/GROUP", "SAVE_GROUP", "SAVE GROUP: group=" + group + ", groupid=" + group.getKey());
 	}
-	
+
 	@Override
 	public final void commitUser(final AccessUser<?> user) {
-		
+
 		final UserObject userObject = (UserObject) user;
 		final UserData userData = userObject.data;
 		if (userData == null) {
@@ -703,59 +702,59 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			this.toCommitUsers.add(userObject.data);
 		}
 	}
-	
+
 	@Override
 	public ControlForm<?> createFormGroupCreation(final String path) {
-		
+
 		return new FormGroupProperties(path, null);
 	}
-	
+
 	@Override
 	public ControlForm<?> createFormGroupProperties(final String path, final String key) {
-		
+
 		return new FormGroupProperties(path, key);
 	}
-	
+
 	@Override
 	public ControlForm<?> createFormSecuritySetup(final String path) {
-		
+
 		return new FormFolderSecurity(path);
 	}
-	
+
 	@Override
 	public ControlForm<?> createFormUserSearch(final AccessGroup<?> group, final ControlContainer<?> container) {
-		
+
 		return new FormSearchUsers(group, container);
 	}
-	
+
 	@Override
 	public ControlForm<?> createFormUserSelection(final AccessGroup<?> group, final AccessUser<?> user) {
-		
+
 		return new FormSearchSelectUser(group);
 	}
-	
+
 	@Override
 	public ControlForm<?> createFormUsersSelection(final AccessGroup<?> group, final AccessUser<?>[] users, final Function<AccessUser<?>[], Object> resultFilter) {
-		
+
 		return new FormSearchSelectUsers(group, users, resultFilter);
 	}
-	
+
 	@Override
 	public final AccessGroup<?> createGroup() {
-		
+
 		return new GroupObject(this, Engine.createGuid());
 	}
-	
+
 	@Override
 	public final AccessUser<?> createUser() {
-		
+
 		final String keyGuid = Engine.createGuid();
 		return this.cacheUser.getCreate(keyGuid, null, keyGuid, this.creatorUserObject);
 	}
-	
+
 	@Override
 	public final void deleteGroup(final String key) {
-		
+
 		if (key == null) {
 			throw new NullPointerException("key can't be null!");
 		}
@@ -768,10 +767,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		Report.event("UMAN/GROUP", "SAVE_GROUP", "DELETE GROUP: groupid=" + key);
 	}
-	
+
 	@Override
 	public final boolean deleteUser(final String key) {
-		
+
 		final int deleted;
 		try (final Connection conn = this.getConnection()) {
 			try (final PreparedStatement ps = conn.prepareStatement("DELETE FROM " + this.tablePrefix + "UserAccounts WHERE UserID=?")) {
@@ -798,23 +797,23 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			this.cacheUser.remove(key);
 		}
 	}
-	
+
 	@Override
 	public final AccessGroup<?>[] getAllGroups() {
-		
+
 		final List<AccessGroup<?>> groupList = this.loadGroupsList();
 		return groupList.toArray(new AccessGroup<?>[groupList.size()]);
 	}
-	
+
 	@Override
 	public final AccessUser<?>[] getAllUsers() {
-		
+
 		return this.searchByType(UserTypes.UT_AUTO, UserTypes.UT_HANDMADE, SortMode.SM_ACCESSED_DESC);
 	}
-	
+
 	@Override
 	public final AccessGroup<?> getGroup(final String key, final boolean create) {
-		
+
 		if (key == null || key.length() == 0) {
 			if (create) {
 				final GroupObject result = new GroupObject(this, Engine.createGuid());
@@ -843,7 +842,7 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 				break;
 			}
 		}
-		
+
 		GroupObject result = groupMap.get(key);
 		if (result == null && create) {
 			result = new GroupObject(this, key);
@@ -852,10 +851,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		return result;
 	}
-	
+
 	@Override
 	public final AccessGroup<?>[] getGroups(final AccessUser<?> user) {
-		
+
 		if (user.getCreated() == -1) {
 			return new AccessGroup<?>[]{
 					this.getGroup("def.guest", true)
@@ -863,10 +862,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		return this.cacheUserGroups.getCreate(user.getKey(), null, user.getKey(), this.creatorUserGroups);
 	}
-	
+
 	@Override
 	public final AccessUser<?> getUser(final String key, final boolean create) {
-		
+
 		if (key == null || key.length() == 0) {
 			// new user always doesn't exist
 			return create
@@ -883,10 +882,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 				? null
 				: cached;
 	}
-	
+
 	@Override
 	public AccessUser<?> getUserByAuth(final String authType, final String uniqueId) {
-		
+
 		if (authType == null || authType.length() == 0) {
 			throw new IllegalArgumentException("authType is undefined!");
 		}
@@ -903,10 +902,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			: null;
 		// return auth.getUserObject( uniqueId );
 	}
-	
+
 	@Override
 	public final AccessUser<?> getUserByLogin(final String key, final boolean create) {
-		
+
 		if (key == null || key.length() == 0) {
 			throw new IllegalArgumentException("login is undefined!");
 		}
@@ -926,16 +925,16 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		return this.getUser(userId, create);
 	}
-	
+
 	@Override
 	public final AccessUser<?>[] getUsers(final AccessGroup<?> group) {
-		
+
 		return this.loadUsersForGroup(group.getKey());
 	}
-	
+
 	@Override
 	public boolean isInGroup(final AccessUser<?> user, final AccessGroup<?> group) {
-		
+
 		if (group.getAuthLevel() == AuthLevels.AL_UNAUTHORIZED) {
 			return true;
 		}
@@ -948,27 +947,27 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		return false;
 	}
-	
+
 	@Override
 	public boolean isInGroup(final String userId, final String groupId) {
-		
+
 		final AccessGroup<?> group = this.getGroup(groupId, true);
 		final AccessUser<?> user = this.getUser(userId, true);
 		return this.isInGroup(user, group);
 	}
-	
+
 	@Override
 	public final BaseObject load(final String key) {
-		
+
 		final UserProfileData profile = this.getUserProfile("systemUserInternal", key, false, false);
 		return profile == null
 			? BaseObject.UNDEFINED
 			: profile.getData();
 	}
-	
+
 	@Override
 	public final void savePersistent(final String key, final BaseObject map) {
-		
+
 		final UserProfileData profile = this.getUserProfile("systemUserInternal", key, false, true);
 		profile.setData(map);
 		profile.setAccessed(0L);
@@ -977,10 +976,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 				profile
 		});
 	}
-	
+
 	@Override
 	public final void saveTemporary(final String key, final BaseObject map, final long expirationDate) {
-		
+
 		final UserProfileData profile = this.getUserProfile("systemUserInternal", key, false, true);
 		profile.setData(map);
 		profile.setAccessed(expirationDate - 60_000L * 60L * 24L * 7L);
@@ -989,10 +988,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 				profile
 		});
 	}
-	
+
 	@Override
 	public final AccessUser<?>[] search(final String login, final String email, final long logonStart, final long logonEnd, final SortMode sortMode) {
-		
+
 		final StringBuilder wherePart = new StringBuilder();
 		if (login != null && !login.isBlank()) {
 			if (wherePart.length() > 0) {
@@ -1047,10 +1046,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			throw new RuntimeException("userDataProvider", e);
 		}
 	}
-	
+
 	@Override
 	public final AccessUser<?>[] searchByMembership(final Collection<String> groups, final SortMode sortMode) {
-		
+
 		final Set<String> searchGroups;
 		if (groups == null) {
 			searchGroups = new TreeSet<>();
@@ -1064,10 +1063,14 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		try (final Connection conn = this.getConnection()) {
 			try (final PreparedStatement ps = conn.prepareStatement(
 					searchGroups.isEmpty()
-						? "SELECT ua.UserID FROM " + this.tablePrefix + "UserAccounts ua WHERE ua.type > 5 GROUP BY ua.UserID"
-								+ AccessManagerImpl.getSortModeGroupByAppend(sortMode)
-						: "SELECT ua.UserID FROM " + this.tablePrefix + "UserAccounts ua, " + this.tablePrefix + "UserGroups ur WHERE ur.userid = ua.UserID AND ur.groupid in ('"
-								+ Text.join(searchGroups, "','") + "') AND ua.type > 5 GROUP BY ua.UserID" + AccessManagerImpl.getSortModeGroupByAppend(sortMode),
+						? "SELECT ua.UserID " + //
+								"FROM " + this.tablePrefix + "UserAccounts ua " + //
+								"WHERE ua.type > 5 " + //
+								"GROUP BY ua.UserID" + AccessManagerImpl.getSortModeGroupByAppend(sortMode)
+						: "SELECT ua.UserID " + //
+								"FROM " + this.tablePrefix + "UserAccounts ua, " + this.tablePrefix + "UserGroups ur " + //
+								"WHERE ur.userid = ua.UserID AND ur.groupid in ('" + String.join("','", searchGroups) + "') AND ua.type > 5 " + //
+								"GROUP BY ua.UserID" + AccessManagerImpl.getSortModeGroupByAppend(sortMode),
 					ResultSet.TYPE_FORWARD_ONLY,
 					ResultSet.CONCUR_READ_ONLY)) {
 				try (final ResultSet rs = ps.executeQuery()) {
@@ -1082,10 +1085,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			throw new RuntimeException("userDataProvider", e);
 		}
 	}
-	
+
 	@Override
 	public final AccessUser<?>[] searchByType(final int minType, final int maxType, final SortMode sortMode) {
-		
+
 		try (final Connection conn = this.getConnection()) {
 			try (final PreparedStatement ps = conn.prepareStatement(
 					"SELECT UserID FROM " + this.tablePrefix + "UserAccounts WHERE type>=" + minType + " AND type<=" + maxType + AccessManagerImpl.getSortMode(sortMode),
@@ -1103,10 +1106,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			throw new RuntimeException("userDataProvider", e);
 		}
 	}
-	
+
 	@Override
 	public AccessPrincipal<?> securityCheck(final int forceLevel, final String pathOriginal, final String command) {
-		
+
 		this.stsSecurityChecks++;
 		final String path = AccessManagerImpl.fixPath(pathOriginal);
 		if ("$view_tree".equals(command)) {
@@ -1400,10 +1403,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		this.stsSecurityDenied++;
 		return null;
 	}
-	
+
 	@Override
 	public AccessPrincipal<?>[] securityGetAccessEffective(final String path, final String permission) {
-		
+
 		final AclObject acl = this.securityGetPermissionsFor(path);
 		if (acl == null) {
 			return new AccessPrincipal<?>[]{
@@ -1428,10 +1431,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		return result;
 	}
-	
+
 	@Override
 	public Set<String> securityGetPermissionsEffective(final AccessPrincipal<?> principal, final String path) {
-		
+
 		final AclObject aclValue;
 		synchronized (this.aclLock) {
 			this.loadAcls();
@@ -1445,11 +1448,11 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			? AccessPermissions.PERMISSIONS_NONE
 			: entry.getPermissions();
 	}
-	
+
 	/** @param pathOriginal
 	 * @return acl */
 	public AclObject securityGetPermissionsFor(final String pathOriginal) {
-		
+
 		final String path = AccessManagerImpl.fixPath(pathOriginal);
 		final AclObject acl;
 		synchronized (this.aclLock) {
@@ -1459,11 +1462,11 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			? new AclObject(path, true)
 			: acl;
 	}
-	
+
 	/** @param acl
 	 * @return acl */
 	public AclObject securitySetPermissionsFor(final AclObject acl) {
-		
+
 		final String path = AccessManagerImpl.fixPath(acl.getPath());
 		final boolean inherit = acl.isInherit();
 		final String counter = Engine.createGuid();
@@ -1501,7 +1504,7 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 									4,
 									params == AccessPermissions.PERMISSIONS_ALL
 										? "*"
-										: Text.join(params, ","));
+										: String.join(",", params));
 							ps.setString(5, counter);
 							ps.executeUpdate();
 						}
@@ -1534,14 +1537,14 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		}
 		return acl;
 	}
-	
+
 	@Override
 	public final AccessGroup<?>[] setGroups(final AccessUser<?> user, final AccessGroup<?>[] groups) {
-		
+
 		// ///////////////////
 		// cache 'em
 		final AccessGroup<?>[] userGroups = this.getGroups(user);
-		
+
 		final List<AccessGroup<?>> allOld = Arrays.asList(
 				userGroups == null
 					? AccessManagerImpl.EMPTY_GROUP_ARRAY
@@ -1550,27 +1553,27 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 				groups == null
 					? AccessManagerImpl.EMPTY_GROUP_ARRAY
 					: groups);
-		
+
 		final Set<AccessGroup<?>> removed = Create.tempSet(allOld);
 		removed.removeAll(allNew);
-		
+
 		final Set<AccessGroup<?>> added = Create.tempSet(allNew);
 		added.removeAll(allOld);
-		
+
 		this.updateGroups(user, removed, added);
 		return groups;
 	}
-	
+
 	@Override
 	public final void setPassword(final AccessUser<?> user, final String password, final PasswordType passwordType) {
-		
+
 		final UserObject userObject = (UserObject) user;
 		userObject.setPassword(password, passwordType);
 	}
-	
+
 	@Override
 	public final void updateGroups(final AccessUser<?> user, final Set<AccessGroup<?>> removed, final Set<AccessGroup<?>> added) {
-		
+
 		final ReportReceiver log = Report.currentReceiverLog();
 		final String counter = Engine.createGuid();
 		try (final Connection conn = this.getConnection()) {
@@ -1609,16 +1612,16 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			this.cacheUserGroups.remove(user.getKey());
 		}
 	}
-	
+
 	/** @return */
 	protected Connection getConnection() {
-		
+
 		return this.server.getServerConnection(this.pool);
 	}
-	
+
 	/** @param data */
 	protected final void scheduledCommitUserData(final UserData[] data) {
-		
+
 		final long timestampMillis = Engine.fastTime();
 		final Timestamp time = new Timestamp(timestampMillis);
 		try (final Connection conn = this.getConnection()) {
@@ -1635,10 +1638,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			throw new RuntimeException("userDataProvider", e);
 		}
 	}
-	
+
 	/** @param data */
 	protected final void scheduledCommitUserProfileData(final UserProfileData[] data) {
-		
+
 		final Timestamp time = new Timestamp(Engine.fastTime());
 		try (final Connection conn = this.getConnection()) {
 			final List<UserProfileData> toInsert = new ArrayList<>(data.length);
@@ -1654,10 +1657,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			throw new RuntimeException("userDataProvider", e);
 		}
 	}
-	
+
 	/** @param data */
 	protected final void scheduledUpdateAccessedProfiles(final UserProfileData[] data) {
-		
+
 		final Timestamp time = new Timestamp(Engine.fastTime());
 		try (final Connection conn = this.getConnection()) {
 			final int length = data.length;
@@ -1694,10 +1697,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			throw new RuntimeException("userDataProvider", e);
 		}
 	}
-	
+
 	/** @param userIDs */
 	protected final void scheduledUpdateAccessedUsers(final String[] userIDs) {
-		
+
 		final Timestamp time = new Timestamp(Engine.fastTime());
 		try (final Connection conn = this.getConnection()) {
 			final int length = userIDs.length;
@@ -1727,16 +1730,16 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			throw new RuntimeException("userDataProvider", e);
 		}
 	}
-	
+
 	final void enqueueTask(final RequestAttachment<?, RunnerDatabaseRequestor> task) {
-		
+
 		// TODO: check - is it right? this '= false' was not here.
 		this.stopped = false;
 		this.searchLoader.add(task);
 	}
-	
+
 	void executeCommitGroup(final Connection conn, final GroupObject groupObject) throws SQLException {
-		
+
 		try (final PreparedStatement ps = conn.prepareStatement("UPDATE " + this.tablePrefix + "Groups SET groupid=?,title=?,description=?,authLevel=?,data=? WHERE groupid=?")) {
 			ps.setString(1, groupObject.getKey());
 			ps.setString(2, groupObject.getTitle());
@@ -1759,9 +1762,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			this.stsGroupsInserted++;
 		}
 	}
-	
+
 	final void executeDeleteGroup(final Connection conn, final String key) {
-		
+
 		try {
 			try (final PreparedStatement ps = conn.prepareStatement("DELETE FROM " + this.tablePrefix + "Groups WHERE groupid=?")) {
 				ps.setString(1, key);
@@ -1783,9 +1786,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			this.cacheUserGroups.clear();
 		}
 	}
-	
+
 	final void executeFillUserData(final Connection conn, final String userID, final UserData data) throws SQLException {
-		
+
 		this.stopped = false;
 		try (final PreparedStatement ps = conn.prepareStatement(this.userByUserId)) {
 			ps.setString(1, userID);
@@ -1811,9 +1814,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	final void executeFillUserProfileData(final Connection conn, final String userID, final String name, final UserProfileData data) throws SQLException {
-		
+
 		try (final PreparedStatement ps = conn.prepareStatement(
 				"SELECT UserID,Scope,Checked,LastAccess,Profile FROM umUserProfiles WHERE UserID=? AND Scope=?",
 				ResultSet.TYPE_FORWARD_ONLY,
@@ -1843,9 +1846,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	final void executeLoadGroups(final Connection conn) throws SQLException {
-		
+
 		final List<AccessGroup<?>> groupList = new ArrayList<>();
 		final Map<String, GroupObject> groupMap = new HashMap<>(256, 0.5f);
 		try (final PreparedStatement ps = conn.prepareStatement(
@@ -1920,10 +1923,10 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		this.groupList = groupList;
 		this.groupMap = groupMap;
 	}
-	
+
 	/* Ordered by AuthLevel DESC ! */
 	final AccessGroup<?>[] executeLoadUserGroups(final Connection conn, final String userID) throws SQLException {
-		
+
 		try (final PreparedStatement ps = conn.prepareStatement(
 				"SELECT g.groupid FROM " + this.tablePrefix + "Groups g, " + this.tablePrefix + "UserGroups u WHERE u.userid=? AND g.groupid=u.groupid GROUP BY g.groupid",
 				ResultSet.TYPE_FORWARD_ONLY,
@@ -1946,9 +1949,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	final String executeLoginToGuid(final Connection conn, final String login) throws SQLException {
-		
+
 		try (final PreparedStatement ps = conn
 				.prepareStatement("SELECT UserID FROM " + this.tablePrefix + "UserAccounts WHERE login=?", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
 			ps.setString(1, login);
@@ -1960,9 +1963,9 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	final UserProfileData getUserProfile(final String userId, final String name, final boolean fresh, final boolean create) {
-		
+
 		if (create) {
 			final UserProfileData result = this.cacheUserProfile.get(
 					userId, //
@@ -1994,16 +1997,16 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			? null
 			: result;
 	}
-	
+
 	final void register() {
-		
+
 		final ExecProcess context = Exec.currentProcess();
 		((StatusRegistry) context.baseGet(ProvideStatus.REGISTRY_CONTEXT_KEY, BaseObject.UNDEFINED).baseValue())
 				.register(new UserManagerStatus(this, this.cacheUser, this.cacheUserProfile, this.cacheUserGroups, this.cacheUserLogin));
 	}
-	
+
 	final void removing() {
-		
+
 		synchronized (this) {
 			if (!this.stopped) {
 				this.stopped = true;
@@ -2011,14 +2014,14 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 			}
 		}
 	}
-	
+
 	final void start() {
-		
+
 		Act.launchService(Exec.createProcess(null, "SEARCH: " + this.toString()), this.searchLoader);
 	}
-	
+
 	final void statusFill(final StatusInfo data) {
-		
+
 		data.put("Users: Cache size", Format.Compact.toDecimal(this.cacheUser.size()));
 		data.put("Users: loaded (hits)", Format.Compact.toDecimal(this.stsUsersLoaded));
 		data.put("Users: loaded (misses)", Format.Compact.toDecimal(this.stsUsersCreated));
@@ -2050,17 +2053,17 @@ public final class AccessManagerImpl extends AbstractAccessManager implements Te
 		data.put("Security: ACL list loaded", Format.Compact.toDecimal(this.stsAclListLoaded));
 		this.searchLoader.statusFill(data);
 	}
-	
+
 	final void stop() {
-		
+
 		if (this.searchLoader != null) {
 			this.searchLoader.stop();
 			this.searchLoader = null;
 		}
 	}
-	
+
 	final void storeUserProfile(final String userId, final String name, final boolean fresh, final BaseObject data) {
-		
+
 		final UserProfileData profile = this.getUserProfile(userId, name, fresh, true);
 		profile.setUserID(userId);
 		profile.setName(name);
